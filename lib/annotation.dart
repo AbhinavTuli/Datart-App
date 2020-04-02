@@ -1,51 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math';
+import 'package:collection/collection.dart';
 import 'package:zoom_widget/zoom_widget.dart';
 
-class MyPainter extends CustomPainter{
-  @override
-  void paint(Canvas canvas, Size size) {
-    // TODO: implement paint
-  }
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) {
-    // TODO: implement shouldRepaint
-    return false;
-  }
-}
+Function deepEq = const DeepCollectionEquality().equals;
+
 class AnnotationPage extends StatefulWidget {
   @override
   _AnnotationPageState createState() => _AnnotationPageState();
 }
 
+List colors = [
+  Colors.red,
+  Colors.green,
+  Colors.yellow,
+  Colors.purple,
+  Colors.pink,
+  Colors.orange,
+  Colors.blue,
+  Colors.brown,
+  Colors.lightGreen,
+  Colors.lightBlue
+];
+Random random = new Random();
+
+int colorIndex = 0;
+String dropdownValue = 'One';
+
+List<int> labelColors = [0];
+List<String> labelNames;
 class _AnnotationPageState extends State<AnnotationPage> {
-//  @override
-//  Widget build(BuildContext context) {
-//    SystemChrome.setPreferredOrientations([
-//      DeviceOrientation.landscapeLeft,
-//      DeviceOrientation.landscapeRight,
-//    ]);
-//    return Scaffold(
-//      backgroundColor: Colors.white,
-//      body: Container(
-//          child: Center(
-//            child: SizedBox(
-//              height: 100,
-//              width: 100,
-//              child: PhotoView(
-//                imageProvider: AssetImage("./assets/images/forest.jpg"),
-//              ),
-//            ),
-//          )
-//      )
-//    );
-//  }
-//}
-  List<Offset> points = <Offset>[];
+  List<List<Offset>> points = <List<Offset>>[];
+  //List<Offset> current = <Offset>[];
+  int ind = 0;
+  double wid, hei;
+
+  void changeIndex() {
+    setState(() => colorIndex = random.nextInt(10));
+  }
 
   @override
   Widget build(BuildContext context) {
+    wid = MediaQuery.of(context).size.width;
+    hei = MediaQuery.of(context).size.height;
     SystemChrome.setEnabledSystemUIOverlays([]);
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
@@ -58,11 +56,11 @@ class _AnnotationPageState extends State<AnnotationPage> {
           fit: BoxFit.cover,
         ),
       ),
-      margin: EdgeInsets.all(1.0),
+      //margin: EdgeInsets.all(1.0),
       alignment: Alignment.topLeft,
       //color: Colors.blueGrey[50],
       child: CustomPaint(
-        painter: Sketcher(points),
+        painter: Sketcher(points, Size(0.8 * wid, hei)),
       ),
     );
 
@@ -71,54 +69,140 @@ class _AnnotationPageState extends State<AnnotationPage> {
 //        title: Text('Sketcher'),
 //      ),
       //backgroundColor: Image.asset("./assets/images/forest.jpg").color,
-      body: GestureDetector(
-        onPanUpdate: (DragUpdateDetails details) {
-          setState(() {
-            RenderBox box = context.findRenderObject();
-            Offset point = box.globalToLocal(details.globalPosition);
-            point = point.translate(0.0, 0);
-
-            points = List.from(points)..add(point);
-          });
-        },
-        onPanEnd: (DragEndDetails details) {
-          points.add(null);
-        },
-        child: sketchArea,
-      ),
+      body: Row(children: <Widget>[
+        Expanded(
+          flex: 8,
+          child: GestureDetector(
+            onPanUpdate: (DragUpdateDetails details) {
+              setState(() {
+                RenderBox box = context.findRenderObject();
+                Offset point = box.globalToLocal(details.globalPosition);
+                point = point.translate(0.0, 0);
+                if (points == null || points.length < (ind + 1)) {
+                  //print("adding");
+                  points.add(<Offset>[]);
+                  //print(points);
+                  //print(point);
+                }
+                if (points[ind] != null && points[ind].length >= 2) {
+                  points[ind][1] = point;
+                } else {
+                  points[ind].add(point);
+                }
+                //print(points);
+              });
+            },
+            onPanEnd: (DragEndDetails details) {
+              points[ind].add(null);
+            },
+            child: sketchArea,
+          ),
+        ),
+        Expanded(
+          flex: 2,
+          child: Column(
+            children: <Widget>[
+              RaisedButton(
+                shape: StadiumBorder(),
+                onPressed: () {
+                  changeIndex();
+                  labelColors.add(colorIndex);
+                  if (points[ind] != null && points[ind].length >= 2) {
+                    ind += 1;
+                    //current.clear();
+                    points.add(<Offset>[]);
+                    points[ind] = <Offset>[];
+                    if (points[ind] != null) {
+                      points[ind].clear();
+                    }
+                    //points[ind]=current;
+                  } else if (points[ind] != null && points[ind].length == 1) {
+                    //current.clear();
+                    points[ind].clear();
+                  }
+                },
+                color: Colors.white,
+                child: Padding(
+                  padding: const EdgeInsets.all(21.0),
+                  child: const Text('SAVE',
+                      style: TextStyle(fontSize: 15, color: Colors.blue)),
+                ),
+              ),
+              RaisedButton(
+                shape: StadiumBorder(),
+                onPressed: () {},
+                color: Colors.white,
+                child: Padding(
+                  padding: const EdgeInsets.all(21.0),
+                  child: const Text('NEXT',
+                      style: TextStyle(fontSize: 15, color: Colors.blue)),
+                ),
+              ),
+              DropdownButton<String>(
+                value: dropdownValue,
+                //icon: Icon(Icons.arrow_downward),
+                iconSize: 24,
+                elevation: 16,
+                style: TextStyle(color: Colors.deepPurple),
+                underline: Container(
+                  height: 2,
+                  color: Colors.deepPurpleAccent,
+                ),
+                onChanged: (String newValue) {
+                  setState(() {
+                    dropdownValue = newValue;
+                  });
+                },
+                items: <String>['One', 'Two', 'Three', 'Four', 'Unreasonably long']
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        )
+      ]),
       floatingActionButton: FloatingActionButton(
         tooltip: 'clear Screen',
         backgroundColor: Colors.red,
         child: Icon(Icons.refresh),
         onPressed: () {
-          setState(() => points.clear());
+          setState(() {
+            if (points[ind] == null || points[ind].length == 0) {
+              points.removeLast();
+              points.removeLast();
+              ind--;
+            } else {
+              points.removeLast();
+              ind--;
+              if (ind < 0) {
+                ind = 0;
+              }
+            }
+          });
+          //setState(() => points[ind]=[]);
         },
       ),
     );
   }
 }
 
-//void drawRect(Rect rect, Paint paint) {
-//  assert(_rectIsValid(rect));
-//  assert(paint != null);
-//  _drawRect(rect.left, rect.top, rect.right, rect.bottom,
-//      paint._objects, paint._data);
-//}
-
 class Sketcher extends CustomPainter {
-  final List<Offset> points;
-
-  Sketcher(this.points);
-
+  final List<List<Offset>> points;
+  Size sz;
+  Sketcher(this.points, this.sz);
   @override
   bool shouldRepaint(Sketcher oldDelegate) {
-    return oldDelegate.points != points;
+    return deepEq(oldDelegate.points, points);
+    //return oldDelegate.points != points;
   }
-
 
   void paint(Canvas canvas, Size size) {
     Paint paint = Paint()
-      ..color = Colors.blue.withOpacity(0.5)
+      ..color = colors[colorIndex].withOpacity(0.3)
       ..strokeCap = StrokeCap.round
       ..strokeWidth = 4.0;
 
@@ -127,51 +211,44 @@ class Sketcher extends CustomPainter {
 //        canvas.drawLine(points[i], points[i + 1], paint);
 //      }
 //    }
-    if(points.length>=2) {
-      //canvas.drawLine(points[0], points[points.length - 1], paint);
-        int last=points.length -1;
-        while(last>=1 && points[last]==null){
-          last--;
+    if (points != null) {
+      print("points length " + (points.length).toString());
+      print(points);
+      for (int i = 0; i < points.length; i++) {
+        paint.color = colors[labelColors[i]].withOpacity(0.3);
+        if (points[i] != null && points[i].length >= 2) {
+          print("points " +
+              i.toString() +
+              " length" +
+              (points[i].length).toString());
+          //canvas.drawLine(points[0], points[points.length - 1], paint);
+          int last = points[i].length - 1;
+          while (last >= 1 && points[i][last] == null) {
+            last--;
+          }
+          double x1, x2, y1, y2;
+          Rect r;
+          x1 = points[i][0].dx;
+          y1 = points[i][0].dy;
+          x2 = points[i][last].dx;
+          y2 = points[i][last].dy;
+
+          if (x1 > sz.width) {
+            x1 = sz.width;
+          }
+          if (x2 > sz.width) {
+            x2 = sz.width;
+          }
+          Offset o = new Offset(min(x1, x2),
+              min(y1, y2)); //we determine the top left point this way
+          r = o &
+              Size(
+                  (x1 - x2).abs(),
+                  (y1 - y2)
+                      .abs()); //creates rectangle using top left point and size
+          canvas.drawRect(r, paint);
         }
-        double x1, x2, y1, y2;
-        Rect r;
-        x1 = points[0].dx;
-        y1 = points[0].dy;
-        x2 = points[last].dx;
-        y2 = points[last].dy;
-
-        Offset o=new Offset(min(x1,x2),min(y1,y2));  //we determine the top left point this way
-        r = o & Size((x1 - x2).abs(), (y1 - y2).abs()); //creates rectangle using top left point and size
-        canvas.drawRect(r, paint);
-
-//        if (y2 > y1 && x2 > x1) {
-//          r = points[0] & Size((x1 - x2).abs(), (y1 - y2).abs());
-//          //print(points[0]);
-//          canvas.drawRect(r, paint);
-//        }
-//        if (y2 < y1 && x2 < x1) {
-//          r = points[last] & Size((x1 - x2).abs(), (y1 - y2).abs());
-//          canvas.drawRect(r, paint);
-//        }
-//        if (y2 > y1 && x2 < x1) {
-//          Offset o=new Offset(x2,y1);
-//
-//          r = o & Size((x1 - x2).abs(), (y1 - y2).abs());
-//          canvas.drawRect(r, paint);
-//        }
-//        if (y2 < y1 && x2 > x1) {
-//          Offset o=new Offset(x1,y2);
-//
-//          r = o & Size((x1 - x2).abs(), (y1 - y2).abs());
-//          canvas.drawRect(r, paint);
-//        }
-        //print("right");
-       // print(points);
-
-
-
-      //Offset t=points[0];
-
+      }
     }
   }
 }
