@@ -29,7 +29,8 @@ int colorIndex = 0;
 String dropdownValue = 'One';
 
 List<int> labelColors = [0];
-List<String> labelNames;
+List<String> labelNames=[];
+
 class _AnnotationPageState extends State<AnnotationPage> {
   List<List<Offset>> points = <List<Offset>>[];
   //List<Offset> current = <Offset>[];
@@ -93,7 +94,13 @@ class _AnnotationPageState extends State<AnnotationPage> {
               });
             },
             onPanEnd: (DragEndDetails details) {
-              points[ind].add(null);
+              if(points[ind].length<3) {
+                points[ind].add(null);
+                labelNames.add(dropdownValue);
+              }
+              else{
+                labelNames[ind]=dropdownValue;
+              }
             },
             child: sketchArea,
           ),
@@ -105,6 +112,8 @@ class _AnnotationPageState extends State<AnnotationPage> {
               RaisedButton(
                 shape: StadiumBorder(),
                 onPressed: () {
+                setState(() {
+                  print("save ind was "+ind.toString());
                   changeIndex();
                   labelColors.add(colorIndex);
                   if (points[ind] != null && points[ind].length >= 2) {
@@ -120,6 +129,9 @@ class _AnnotationPageState extends State<AnnotationPage> {
                     //current.clear();
                     points[ind].clear();
                   }
+                  print("save ind is "+ind.toString());
+                });
+
                 },
                 color: Colors.white,
                 child: Padding(
@@ -153,8 +165,13 @@ class _AnnotationPageState extends State<AnnotationPage> {
                     dropdownValue = newValue;
                   });
                 },
-                items: <String>['One', 'Two', 'Three', 'Four', 'Unreasonably long']
-                    .map<DropdownMenuItem<String>>((String value) {
+                items: <String>[
+                  'One',
+                  'Two',
+                  'Three',
+                  'Four',
+                  'Unreasonably long'
+                ].map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
                     child: Text(value),
@@ -171,17 +188,34 @@ class _AnnotationPageState extends State<AnnotationPage> {
         child: Icon(Icons.refresh),
         onPressed: () {
           setState(() {
-            if (points[ind] == null || points[ind].length == 0) {
+            print("undo ind was "+ind.toString());
+            if(ind==points.length){
               points.removeLast();
-              points.removeLast();
+              labelNames.removeLast();
               ind--;
-            } else {
-              points.removeLast();
-              ind--;
-              if (ind < 0) {
-                ind = 0;
+            }
+            else {
+              while (ind > points.length) {
+                ind--;
+              }
+              if (points[ind] == null || points[ind].length == 0) {
+                points.removeLast();
+                points.removeLast();
+                labelNames.removeLast();
+                ind--;
+                if (ind < 0) {
+                  ind = 0;
+                }
+              } else {
+                points.removeLast();
+                labelNames.removeLast();
+                ind--;
+                if (ind < 0) {
+                  ind = 0;
+                }
               }
             }
+            print("undo ind is "+ind.toString());
           });
           //setState(() => points[ind]=[]);
         },
@@ -212,8 +246,10 @@ class Sketcher extends CustomPainter {
 //      }
 //    }
     if (points != null) {
+      //print(ind);
       print("points length " + (points.length).toString());
       print(points);
+      print(labelNames);
       for (int i = 0; i < points.length; i++) {
         paint.color = colors[labelColors[i]].withOpacity(0.3);
         if (points[i] != null && points[i].length >= 2) {
@@ -242,11 +278,24 @@ class Sketcher extends CustomPainter {
           Offset o = new Offset(min(x1, x2),
               min(y1, y2)); //we determine the top left point this way
           r = o &
-              Size(
-                  (x1 - x2).abs(),
-                  (y1 - y2)
-                      .abs()); //creates rectangle using top left point and size
+          Size(
+              (x1 - x2).abs(),
+              (y1 - y2)
+                  .abs()); //creates rectangle using top left point and size
           canvas.drawRect(r, paint);
+
+          if (points[i].length >= 3) {
+            TextSpan span = new TextSpan(
+                style: new TextStyle(
+                    color: Colors.white, fontSize: 12.0, fontFamily: 'Roboto'),
+                text: labelNames[i]);
+            TextPainter tp = new TextPainter(
+                textDirection: TextDirection.ltr,
+                text: span,
+                textAlign: TextAlign.left);
+            tp.layout();
+            tp.paint(canvas, o);
+          }
         }
       }
     }
