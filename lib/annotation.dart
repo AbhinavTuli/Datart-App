@@ -36,7 +36,7 @@ class _AnnotationPageState extends State<AnnotationPage> {
   //List<Offset> current = <Offset>[];
   int ind = 0;
   double wid, hei;
-
+  double topDown,side;
   void changeIndex() {
     setState(() => colorIndex = random.nextInt(10));
   }
@@ -45,25 +45,33 @@ class _AnnotationPageState extends State<AnnotationPage> {
   Widget build(BuildContext context) {
     wid = MediaQuery.of(context).size.width;
     hei = MediaQuery.of(context).size.height;
+
+    FittedSizes sizes = applyBoxFit(BoxFit.contain, Size(845,450),  Size(0.8 * wid, hei));
+    print(sizes.destination);
+    topDown=(hei-sizes.destination.height)/2;
+    side=(0.8*wid-sizes.destination.width)/2;
     SystemChrome.setEnabledSystemUIOverlays([]);
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
     final Container sketchArea = Container(
+
       decoration: BoxDecoration(
         image: DecorationImage(
           image: AssetImage("assets/images/doggy.jpg"),
-          fit: BoxFit.cover,
+          fit: BoxFit.contain,
+          //alignment: Alignment(0, 1),
         ),
       ),
       //margin: EdgeInsets.all(1.0),
       alignment: Alignment.topLeft,
       //color: Colors.blueGrey[50],
       child: CustomPaint(
-        painter: Sketcher(points, Size(0.8 * wid, hei)),
+        painter: Sketcher(points, Size(0.8 * wid, hei),topDown,side),
       ),
     );
+
 
     return Scaffold(
 //      appBar: AppBar(
@@ -175,7 +183,7 @@ class _AnnotationPageState extends State<AnnotationPage> {
                   'Two',
                   'Three',
                   'Four',
-                  'Unreasonably long'
+                  'Five'
                 ].map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
@@ -238,7 +246,8 @@ class _AnnotationPageState extends State<AnnotationPage> {
 class Sketcher extends CustomPainter {
   final List<List<Offset>> points;
   Size sz;
-  Sketcher(this.points, this.sz);
+  double topDown,side;
+  Sketcher(this.points, this.sz,this.topDown,this.side);
   @override
   bool shouldRepaint(Sketcher oldDelegate) {
     return deepEq(oldDelegate.points, points);
@@ -281,12 +290,57 @@ class Sketcher extends CustomPainter {
           y2 = points[i][last].dy;
 
           if (x1 > sz.width) {
+            points[i][0]=Offset(sz.width,y1);
             x1 = sz.width;
           }
           if (x2 > sz.width) {
+            points[i][last]=Offset(sz.width,y2);
             x2 = sz.width;
           }
+          print("side "+side.toString());
+          print("topDown "+topDown.toString());
+          print("height "+sz.height.toString());
+          print("width "+sz.width.toString());
+          if(side!=0){
+            if (x1 < side) {
+              points[i][0]=Offset(side,y1);
+              x1 = side;
+            }
+            if (x2 < side) {
+              points[i][last]=Offset(side,y2);
+              x2 = side;
+            }
+            if (x1 > sz.width-side) {
+              points[i][0]=Offset(sz.width-side,y1);
+              x1 = sz.width-side;
+            }
+            if (x2 > sz.width-side) {
+              points[i][last]=Offset(sz.width-side,y2);
+              x2 = sz.width-side;
+            }
+          }
 
+          if(topDown!=0){
+            if (y1 < topDown) {
+              points[i][0]=Offset(x1,topDown);
+              y1 = topDown;
+            }
+            if (y2 < topDown) {
+              points[i][last]=Offset(x2,topDown);
+              y2 = topDown;
+            }
+            if (y1 > sz.height-topDown) {
+              points[i][0]=Offset(x1,sz.height-topDown);
+              y1 = sz.height-topDown;
+            }
+            if (y2 > sz.height-topDown) {
+              points[i][last]=Offset(x2,sz.height-topDown);
+              y2 = sz.height-topDown;
+            }
+          }
+
+
+          //if(y1<sz)
           Offset a=new Offset(x1,y1 );
           Offset b=new Offset(x2,y1);
           Offset c=new Offset(x2,y2);
