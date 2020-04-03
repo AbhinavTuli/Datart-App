@@ -25,7 +25,7 @@ List colors = [
 ];
 Random random = new Random();
 
-int colorIndex = 0;
+int colorIndex = random.nextInt(10);
 String dropdownValue = 'One';
 
 List<int> labelColors = [0];
@@ -53,7 +53,7 @@ class _AnnotationPageState extends State<AnnotationPage> {
     final Container sketchArea = Container(
       decoration: BoxDecoration(
         image: DecorationImage(
-          image: AssetImage("assets/images/forest.jpg"),
+          image: AssetImage("assets/images/doggy.jpg"),
           fit: BoxFit.cover,
         ),
       ),
@@ -94,13 +94,15 @@ class _AnnotationPageState extends State<AnnotationPage> {
               });
             },
             onPanEnd: (DragEndDetails details) {
-              if(points[ind].length<3) {
-                points[ind].add(null);
-                labelNames.add(dropdownValue);
-              }
-              else{
-                labelNames[ind]=dropdownValue;
-              }
+              setState(() {
+                if(points[ind].length<3) {
+                  points[ind].add(null);
+                  labelNames.add(dropdownValue);
+                }
+                else{
+                  labelNames[ind]=dropdownValue;
+                }
+              });
             },
             child: sketchArea,
           ),
@@ -163,6 +165,9 @@ class _AnnotationPageState extends State<AnnotationPage> {
                 onChanged: (String newValue) {
                   setState(() {
                     dropdownValue = newValue;
+                    if(ind<labelNames.length && labelNames[ind]!=null) {
+                      labelNames[ind] = dropdownValue;
+                    }
                   });
                 },
                 items: <String>[
@@ -189,29 +194,35 @@ class _AnnotationPageState extends State<AnnotationPage> {
         onPressed: () {
           setState(() {
             print("undo ind was "+ind.toString());
-            if(ind==points.length){
+            if(ind==points.length && ind>0){
               points.removeLast();
               labelNames.removeLast();
               ind--;
+            }
+            else if(ind==0 && points.length==1){
+              points.removeLast();
+              labelNames.removeLast();
             }
             else {
               while (ind > points.length) {
                 ind--;
               }
-              if (points[ind] == null || points[ind].length == 0) {
-                points.removeLast();
-                points.removeLast();
-                labelNames.removeLast();
-                ind--;
-                if (ind < 0) {
-                  ind = 0;
-                }
-              } else {
-                points.removeLast();
-                labelNames.removeLast();
-                ind--;
-                if (ind < 0) {
-                  ind = 0;
+              if(ind!=0) {
+                if (points[ind] == null || points[ind].length == 0) {
+                  points.removeLast();
+                  points.removeLast();
+                  labelNames.removeLast();
+                  ind--;
+                  if (ind < 0) {
+                    ind = 0;
+                  }
+                } else {
+                  points.removeLast();
+                  labelNames.removeLast();
+//                  ind--;
+//                  if (ind < 0) {
+//                    ind = 0;
+//                  }
                 }
               }
             }
@@ -275,6 +286,13 @@ class Sketcher extends CustomPainter {
           if (x2 > sz.width) {
             x2 = sz.width;
           }
+
+          Offset a=new Offset(x1,y1 );
+          Offset b=new Offset(x2,y1);
+          Offset c=new Offset(x2,y2);
+          Offset d=new Offset(x1,y2);
+
+
           Offset o = new Offset(min(x1, x2),
               min(y1, y2)); //we determine the top left point this way
           r = o &
@@ -283,7 +301,11 @@ class Sketcher extends CustomPainter {
               (y1 - y2)
                   .abs()); //creates rectangle using top left point and size
           canvas.drawRect(r, paint);
-
+          paint.color=colors[labelColors[i]];
+          canvas.drawLine(a,b,paint);
+          canvas.drawLine(c,b,paint);
+          canvas.drawLine(c,d,paint);
+          canvas.drawLine(a,d,paint);
           if (points[i].length >= 3) {
             TextSpan span = new TextSpan(
                 style: new TextStyle(
