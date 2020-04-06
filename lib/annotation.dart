@@ -57,12 +57,16 @@ class _AnnotationPageState extends State<AnnotationPage> {
     ]);
     final Container sketchArea = Container(
 
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage("assets/images/doggy.jpg"),
-          fit: BoxFit.contain,
-          //alignment: Alignment(0, 1),
-        ),
+//      decoration: BoxDecoration(
+//        image: DecorationImage(
+//          image: AssetImage("assets/images/doggy.jpg"),
+//          fit: BoxFit.contain,
+//          //alignment: Alignment(0, 1),
+//        ),
+//      ),
+      decoration: new BoxDecoration(
+          image: new DecorationImage(image:  NetworkImage("https://picsum.photos/250?image=9"),
+              fit: BoxFit.contain)
       ),
       //margin: EdgeInsets.all(1.0),
       alignment: Alignment.topLeft,
@@ -74,6 +78,7 @@ class _AnnotationPageState extends State<AnnotationPage> {
 
 
     return Scaffold(
+      backgroundColor: Colors.grey[850],
 //      appBar: AppBar(
 //        title: Text('Sketcher'),
 //      ),
@@ -119,126 +124,203 @@ class _AnnotationPageState extends State<AnnotationPage> {
           flex: 2,
           child: Column(
             children: <Widget>[
-              RaisedButton(
-                shape: StadiumBorder(),
-                onPressed: () {
-                setState(() {
-                  print("save ind was "+ind.toString());
-                  changeIndex();
-                  labelColors.add(colorIndex);
-                  if (points[ind] != null && points[ind].length >= 2) {
-                    ind += 1;
-                    //current.clear();
-                    points.add(<Offset>[]);
-                    points[ind] = <Offset>[];
-                    if (points[ind] != null) {
-                      points[ind].clear();
-                    }
-                    //points[ind]=current;
-                  } else if (points[ind] != null && points[ind].length == 1) {
-                    //current.clear();
-                    points[ind].clear();
-                  }
-                  print("save ind is "+ind.toString());
-                });
+              Padding(
+                padding: const EdgeInsets.fromLTRB(0, 0, 0, 10),
+                child: DropdownButton<String>(
+                  value: dropdownValue,
+                  //icon: Icon(Icons.arrow_downward),
+                  iconSize: 24,
+                  elevation: 16,
+                  style: TextStyle(color: Colors.white),
+                  focusColor: Colors.orange,
+                  underline: Container(
+                    height: 2,
+                    color: Colors.white,
+                  ),
+                  onChanged: (String newValue) {
+                    setState(() {
+                      dropdownValue = newValue;
+                      if(ind<labelNames.length && labelNames[ind]!=null) {
+                        labelNames[ind] = dropdownValue;
+                      }
+                    });
+                  },
+                  items: <String>[
+                    'One',
+                    'Two',
+                    'Three',
+                    'Four',
+                    'Five'
+                  ].map<DropdownMenuItem<String>>((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                ),
+              ),
 
-                },
-                color: Colors.white,
-                child: Padding(
-                  padding: const EdgeInsets.all(21.0),
-                  child: const Text('SAVE',
-                      style: TextStyle(fontSize: 15, color: Colors.blue)),
-                ),
-              ),
-              RaisedButton(
-                shape: StadiumBorder(),
-                onPressed: () {},
-                color: Colors.white,
-                child: Padding(
-                  padding: const EdgeInsets.all(21.0),
-                  child: const Text('NEXT',
-                      style: TextStyle(fontSize: 15, color: Colors.blue)),
-                ),
-              ),
-              DropdownButton<String>(
-                value: dropdownValue,
-                //icon: Icon(Icons.arrow_downward),
-                iconSize: 24,
-                elevation: 16,
-                style: TextStyle(color: Colors.deepPurple),
-                underline: Container(
-                  height: 2,
-                  color: Colors.deepPurpleAccent,
-                ),
-                onChanged: (String newValue) {
-                  setState(() {
-                    dropdownValue = newValue;
-                    if(ind<labelNames.length && labelNames[ind]!=null) {
-                      labelNames[ind] = dropdownValue;
-                    }
-                  });
-                },
-                items: <String>[
-                  'One',
-                  'Two',
-                  'Three',
-                  'Four',
-                  'Five'
-                ].map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-              ),
-            ],
-          ),
-        )
-      ]),
-      floatingActionButton: FloatingActionButton(
-        tooltip: 'clear Screen',
-        backgroundColor: Colors.red,
-        child: Icon(Icons.refresh),
-        onPressed: () {
-          setState(() {
-            print("undo ind was "+ind.toString());
-            if(ind==points.length && ind>0){
-              points.removeLast();
-              labelNames.removeLast();
-              ind--;
-            }
-            else if(ind==0 && points.length==1){
-              points.removeLast();
-              labelNames.removeLast();
-            }
-            else {
-              while (ind > points.length) {
-                ind--;
-              }
-              if(ind!=0) {
-                if (points[ind] == null || points[ind].length == 0) {
-                  points.removeLast();
-                  points.removeLast();
-                  labelNames.removeLast();
-                  ind--;
-                  if (ind < 0) {
-                    ind = 0;
-                  }
-                } else {
-                  points.removeLast();
-                  labelNames.removeLast();
+//              RaisedButton(
+//                shape: StadiumBorder(),
+//                onPressed: () {},
+//                color: Colors.white,
+//                child: Padding(
+//                  padding: const EdgeInsets.all(21.0),
+//                  child: const Text('NEXT',
+//                      style: TextStyle(fontSize: 15, color: Colors.blue)),
+//                ),
+//              ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(10, 50, 10, 0),
+                child: RaisedButton(
+                  shape: StadiumBorder(),
+                  onPressed: () {
+                    setState(() {
+                      print("undo ind was "+ind.toString());
+                      if(ind==points.length && ind>0){
+                        points.removeLast();
+                        labelNames.removeLast();
+                        ind--;
+                      }
+                      else if(ind==0 && points.length==1){
+                        points.removeLast();
+                        labelNames.removeLast();
+                      }
+                      else {
+                        while (ind > points.length) {
+                          ind--;
+                        }
+                        if(ind!=0) {
+                          if (points[ind] == null || points[ind].length == 0) {
+                            points.removeLast();
+                            points.removeLast();
+                            labelNames.removeLast();
+                            ind--;
+                            if (ind < 0) {
+                              ind = 0;
+                            }
+                          } else {
+                            points.removeLast();
+                            labelNames.removeLast();
 //                  ind--;
 //                  if (ind < 0) {
 //                    ind = 0;
 //                  }
-                }
-              }
-            }
-            print("undo ind is "+ind.toString());
-          });
-          //setState(() => points[ind]=[]);
-        },
+                          }
+                        }
+                      }
+                      print("undo ind is "+ind.toString());
+                    });
+                  },
+                  color: Colors.redAccent,
+                  child: Padding(
+                    padding: const EdgeInsets.all(21.0),
+                    child: const Text('UNDO',
+                        style: TextStyle(fontSize: 15, color: Colors.white)),
+                  ),
+                ),
+
+              ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(10, 10, 10, 0),
+                child: RaisedButton(
+                  shape: StadiumBorder(),
+                  onPressed: () {
+                    setState(() {
+                      print("save ind was "+ind.toString());
+                      changeIndex();
+                      labelColors.add(colorIndex);
+                      if (points[ind] != null && points[ind].length >= 2) {
+                        ind += 1;
+                        //current.clear();
+                        points.add(<Offset>[]);
+                        points[ind] = <Offset>[];
+                        if (points[ind] != null) {
+                          points[ind].clear();
+                        }
+                        //points[ind]=current;
+                      } else if (points[ind] != null && points[ind].length == 1) {
+                        //current.clear();
+                        points[ind].clear();
+                      }
+                      print("save ind is "+ind.toString());
+                    });
+
+                  },
+                  color: Colors.yellow[800],
+                  child: Padding(
+                    padding: const EdgeInsets.all(21.0),
+                    child: const Text('SAVE',
+                        style: TextStyle(fontSize: 15, color: Colors.white)),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(10, 40, 10, 20),
+                child: RaisedButton(
+                  shape: StadiumBorder(),
+                  onPressed: () {
+                    setState(() {
+                    });
+                  },
+                  color: Colors.green,
+                  child: Padding(
+                    padding: const EdgeInsets.all(21.0),
+                    child: const Text('NEXT',
+                        style: TextStyle(fontSize: 15, color: Colors.white)),
+                  ),
+                ),
+
+              ),
+            ],
+          ),
+        )
+      ],
       ),
+//      floatingActionButton: FloatingActionButton(
+//        tooltip: 'clear Screen',
+//        backgroundColor: Colors.red,
+//        child: Icon(Icons.refresh),
+//        onPressed: () {
+//          setState(() {
+//            print("undo ind was "+ind.toString());
+//            if(ind==points.length && ind>0){
+//              points.removeLast();
+//              labelNames.removeLast();
+//              ind--;
+//            }
+//            else if(ind==0 && points.length==1){
+//              points.removeLast();
+//              labelNames.removeLast();
+//            }
+//            else {
+//              while (ind > points.length) {
+//                ind--;
+//              }
+//              if(ind!=0) {
+//                if (points[ind] == null || points[ind].length == 0) {
+//                  points.removeLast();
+//                  points.removeLast();
+//                  labelNames.removeLast();
+//                  ind--;
+//                  if (ind < 0) {
+//                    ind = 0;
+//                  }
+//                } else {
+//                  points.removeLast();
+//                  labelNames.removeLast();
+////                  ind--;
+////                  if (ind < 0) {
+////                    ind = 0;
+////                  }
+//                }
+//              }
+//            }
+//            print("undo ind is "+ind.toString());
+//          });
+//          //setState(() => points[ind]=[]);
+//        },
+//      ),
     );
   }
 }
